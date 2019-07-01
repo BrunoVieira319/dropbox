@@ -2,16 +2,18 @@ package com.tec.dropbox.controller;
 
 import com.tec.dropbox.dto.FileDto;
 import com.tec.dropbox.dto.UserDto;
+import com.tec.dropbox.service.FileService;
+import com.tec.dropbox.service.FolderService;
 import com.tec.dropbox.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,10 +25,14 @@ import java.util.List;
 public class UserController {
 
     private UserService userService;
+    private FileService fileService;
+    private FolderService folderService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, FileService fileService, FolderService folderService) {
         this.userService = userService;
+        this.fileService = fileService;
+        this.folderService = folderService;
     }
 
     @PostMapping(value = "/signUp")
@@ -43,45 +49,58 @@ public class UserController {
 
     @GetMapping(value = "/{id}/folders")
     public ResponseEntity listDir(@PathVariable String id) throws IOException {
-        List<FileDto> files = userService.listFiles(id);
+        List<FileDto> files = folderService.listFiles(id);
         return new ResponseEntity<>(files, HttpStatus.OK);
     }
 
     @PatchMapping(value = "/{id}/folders/{folderName}")
     public ResponseEntity enterDir(@PathVariable String id, @PathVariable String folderName) throws IOException {
-        userService.changeWorkDir(id, folderName);
-        List<FileDto> files = userService.listFiles(id);
+        folderService.changeWorkDir(id, folderName);
+        List<FileDto> files = folderService.listFiles(id);
         return new ResponseEntity<>(files, HttpStatus.OK);
     }
 
     @PatchMapping(value = "/{id}/folders")
     public ResponseEntity getBackDir(@PathVariable String id) throws IOException {
-        userService.changeToParentDir(id);
-        List<FileDto> files = userService.listFiles(id);
+        folderService.changeToParentDir(id);
+        List<FileDto> files = folderService.listFiles(id);
         return new ResponseEntity<>(files, HttpStatus.OK);
     }
 
     @PostMapping(value = "/{id}/folders/{dirName}")
     public ResponseEntity createDir(@PathVariable String id, @PathVariable String dirName) throws IOException {
-        userService.createDir(id, dirName);
+        folderService.createDir(id, dirName);
         return new ResponseEntity(HttpStatus.CREATED);
     }
 
-    @GetMapping(value = "/{id}/file/{filename}")
+    @GetMapping(value = "/{id}/files/{filename}")
     public ResponseEntity downloadFile(
             @PathVariable String id,
             @PathVariable String filename) throws IOException {
 
-        File file = userService.downloadFile(id, filename);
+        File file = fileService.retrieveFile(id, filename);
         String contentType = Files.probeContentType(file.toPath());
 
         byte[] bytes = Files.readAllBytes(file.toPath());
+        file.delete();
 
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.parseMediaType(contentType))
                 .contentLength(file.length())
                 .body(new ByteArrayResource(bytes));
+    }
+
+    @PostMapping(value = "/{id}/files")
+    public ResponseEntity uploadFile(@PathVariable String id, @RequestParam("file") MultipartFile file) throws IOException {
+        fileService.storeFile(id, file);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}/files/{filename}")
+    public ResponseEntity deleteFile(@PathVariable String id, @PathVariable String filename) throws IOException {
+        fileService.deleteFile(id, filename);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 }
