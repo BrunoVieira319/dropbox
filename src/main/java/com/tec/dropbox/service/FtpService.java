@@ -5,7 +5,6 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.util.HashMap;
 import java.util.Map;
 
