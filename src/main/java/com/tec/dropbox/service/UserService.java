@@ -18,8 +18,7 @@ public class UserService {
         this.ftpService = ftpService;
     }
 
-    public UserDto connect(String username, String password) throws IOException {
-        FTPClient ftpClient = new FTPClient();
+    public UserDto connect(String username, String password, FTPClient ftpClient) throws IOException {
         ftpClient.connect("localhost", 2221);
         boolean login = ftpClient.login(username, password);
 

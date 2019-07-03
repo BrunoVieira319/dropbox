@@ -20,7 +20,7 @@ public class FolderService {
         this.ftpService = ftpService;
     }
 
-    public List<FileDto> listFiles(String id) throws IOException {
+    public List<FileDto> listFilesInWorkDir(String id) throws IOException {
         List<FileDto> files = new LinkedList<>();
         FTPFile[] ftpFiles = ftpService.getClient(id).listFiles();
         Arrays.stream(ftpFiles)
@@ -36,19 +36,19 @@ public class FolderService {
         return files;
     }
 
-    public void createDir(String id, String dirName) throws IOException {
+    public boolean createDir(String id, String dirName) throws IOException {
         if (dirName == "root") {
             throw new IllegalArgumentException("Não é possível criar uma pasta com nome root");
         }
-        ftpService.getClient(id).makeDirectory(dirName);
+        return ftpService.getClient(id).makeDirectory(dirName);
     }
 
-    public void changeWorkDir(String id, String dirName) throws IOException {
-        ftpService.getClient(id).changeWorkingDirectory("/" + dirName);
+    public boolean changeWorkDir(String id, String dirName) throws IOException {
+        return ftpService.getClient(id).changeWorkingDirectory("/" + dirName);
     }
 
-    public void changeToParentDir(String id) throws IOException {
-        ftpService.getClient(id).changeToParentDirectory();
+    public boolean changeToParentDir(String id) throws IOException {
+        return ftpService.getClient(id).changeToParentDirectory();
     }
 
 }

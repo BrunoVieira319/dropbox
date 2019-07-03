@@ -21,8 +21,8 @@ public class FileService {
 
     public File retrieveFile(String id, String filename) throws IOException {
         File file = new File(System.getProperty("user.home") + "/ftp-tmp/" + filename);
-        FileOutputStream out = new FileOutputStream(file);
-        ftpService.getClient(id).retrieveFile(filename, out);
+        ftpService.getClient(id)
+                .retrieveFile(filename, new FileOutputStream(file));
 
         return file;
     }

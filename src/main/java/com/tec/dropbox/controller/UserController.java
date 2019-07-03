@@ -5,6 +5,7 @@ import com.tec.dropbox.dto.UserDto;
 import com.tec.dropbox.service.FileService;
 import com.tec.dropbox.service.FolderService;
 import com.tec.dropbox.service.UserService;
+import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.io.ByteArrayResource;
@@ -43,34 +44,34 @@ public class UserController {
 
     @PostMapping(value = "/login")
     public ResponseEntity login(@RequestBody UserDto user) throws IOException {
-        UserDto connected = userService.connect(user.getName(), user.getPassword());
+        UserDto connected = userService.connect(user.getName(), user.getPassword(), new FTPClient());
         return new ResponseEntity<>(connected, HttpStatus.OK);
-    }
-
-    @GetMapping(value = "/{id}/folders")
-    public ResponseEntity listDir(@PathVariable String id) throws IOException {
-        List<FileDto> files = folderService.listFiles(id);
-        return new ResponseEntity<>(files, HttpStatus.OK);
     }
 
     @PatchMapping(value = "/{id}/folders/{folderName}")
     public ResponseEntity enterDir(@PathVariable String id, @PathVariable String folderName) throws IOException {
         folderService.changeWorkDir(id, folderName);
-        List<FileDto> files = folderService.listFiles(id);
+        List<FileDto> files = folderService.listFilesInWorkDir(id);
         return new ResponseEntity<>(files, HttpStatus.OK);
     }
 
     @PatchMapping(value = "/{id}/folders")
     public ResponseEntity getBackDir(@PathVariable String id) throws IOException {
         folderService.changeToParentDir(id);
-        List<FileDto> files = folderService.listFiles(id);
+        List<FileDto> files = folderService.listFilesInWorkDir(id);
         return new ResponseEntity<>(files, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/{id}/folders/{dirName}")
-    public ResponseEntity createDir(@PathVariable String id, @PathVariable String dirName) throws IOException {
-        folderService.createDir(id, dirName);
+    @PostMapping(value = "/{id}/folders/{folderName}")
+    public ResponseEntity createDir(@PathVariable String id, @PathVariable String folderName) throws IOException {
+        folderService.createDir(id, folderName);
         return new ResponseEntity(HttpStatus.CREATED);
+    }
+
+    @GetMapping(value = "/{id}/files")
+    public ResponseEntity listDir(@PathVariable String id) throws IOException {
+        List<FileDto> files = folderService.listFilesInWorkDir(id);
+        return new ResponseEntity<>(files, HttpStatus.OK);
     }
 
     @GetMapping(value = "/{id}/files/{filename}")
